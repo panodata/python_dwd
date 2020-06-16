@@ -4,9 +4,10 @@ from typing import List, Tuple
 from io import BytesIO
 import pandas as pd
 
-from python_dwd.additionals.helpers import create_stationdata_dtype_mapping
+from python_dwd.additionals.helpers import create_stationdata_dtype_mapping, convert_datetime_hourly
 from python_dwd.constants.column_name_mapping import GERMAN_TO_ENGLISH_COLUMNS_MAPPING
 from python_dwd.constants.metadata import NA_STRING, STATIONDATA_SEP
+from python_dwd.enumerations.column_names_enumeration import DWDMetaColumns
 
 log = logging.getLogger(__name__)
 
@@ -77,6 +78,9 @@ def _parse_dwd_data(filename_and_file: Tuple[str, BytesIO]) -> pd.DataFrame:
 
     # Assign meaningful column names (baseline).
     data = data.rename(columns=GERMAN_TO_ENGLISH_COLUMNS_MAPPING)
+
+    # Properly handle timestamps from "hourly" resolution.
+    data[DWDMetaColumns.DATE.value] = data[DWDMetaColumns.DATE.value].apply(convert_datetime_hourly)
 
     # Coerce the data types appropriately.
     data = data.astype(create_stationdata_dtype_mapping(data.columns))
